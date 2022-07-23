@@ -25,7 +25,7 @@ public class KafkaConsumerMonitor {
 
     public static void main(String[] args) throws TimeoutException {
 
-        Map<TopicPartition, Long> topicPartitionLongMap = lagOf("lodge-unit-center-compare-price", "10.8.2.114:9092");
+        Map<TopicPartition, Long> topicPartitionLongMap = lagOf("lodge-unit-center-compare-price", "");
         for (Map.Entry<TopicPartition, Long> topicPartitionLongEntry : topicPartitionLongMap.entrySet()) {
             System.out.println(topicPartitionLongEntry.getKey() + "----" + topicPartitionLongEntry.getValue());
         }
