@@ -67,7 +67,6 @@ object FunctionDemo {
 
   /**
    * 偏应用函数
-   *
    * @param date
    * @param message
    */
