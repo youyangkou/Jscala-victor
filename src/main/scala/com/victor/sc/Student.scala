@@ -11,7 +11,7 @@ case class Student(name: String, age: Int, school: String) {
       case that: Student =>
         this.name == that.name &&
           this.age == that.age &&
-          this.school == that.school &&
+          this.school == that.school
       case _ => false
     }
   }
