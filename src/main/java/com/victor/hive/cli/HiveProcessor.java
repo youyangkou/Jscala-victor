@@ -1,4 +1,4 @@
-package com.victor.hive;
+package com.victor.hive.cli;
 
 import java.io.BufferedReader;
 import java.io.IOException;
