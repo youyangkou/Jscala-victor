@@ -55,6 +55,11 @@ public class QueryBean {
     String log;
 
 
+    /**
+     * the result of query
+     */
+    String result;
+
 
     @Override
     public boolean equals(Object o) {
@@ -76,7 +81,7 @@ public class QueryBean {
 
     public static void main(String[] args) {
         QueryBean queryBean = QueryBean.builder().build();
-        queryBean.queryState=QueryState.SUCCESS;
+        queryBean.queryState = QueryState.SUCCESS;
         System.out.println(queryBean);
     }
 

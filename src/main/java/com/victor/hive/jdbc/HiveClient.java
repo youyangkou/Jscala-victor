@@ -37,8 +37,8 @@ public class HiveClient {
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    public String executeQuery(QueryBean queryBean) throws ClassNotFoundException, SQLException {
-        String resultStr = null;
+    public QueryBean executeQuery(QueryBean queryBean) throws ClassNotFoundException, SQLException {
+        String resultStr = "";
         String queryId = queryBean.getQueryId();
         String sql = queryBean.getSql();
 
@@ -57,6 +57,7 @@ public class HiveClient {
                 if (queryBean.isOnlyQuery) {
                     try {
                         resultStr = parseResultSet(stmt.executeQuery(sql));
+                        queryBean.queryState = QueryState.SUCCESS;
                     } finally {
                         if (stmt != null) {
                             stmt.close();
@@ -69,10 +70,12 @@ public class HiveClient {
                     //需要异步执行的query,缓存其HiveStatement对象,以提供cancel的功能
                     statementMap.put(queryBean, stmt);
                     stmt.executeAsync(sql);
+                    queryBean.queryState = QueryState.RUNNING;
                 }
             }
         }
-        return resultStr;
+        queryBean.result = resultStr;
+        return queryBean;
     }
 
 
@@ -130,12 +133,12 @@ public class HiveClient {
     /**
      * 等待异步执行，获取执行日志
      *
-     * @param stmt
      * @param queryBean
      * @return
      * @throws Exception
      */
-    public QueryBean waitForOperationToComplete(HiveStatement stmt, QueryBean queryBean) throws Exception {
+    public QueryBean waitForOperationToComplete(QueryBean queryBean) throws Exception {
+        HiveStatement stmt = queryBean.stmt;
         StringBuilder sb = new StringBuilder();
 
         boolean isEnd = false;
@@ -147,7 +150,7 @@ public class HiveClient {
 
             if (isEnd) queryBean.queryState = QueryState.SUCCESS;
             i++;
-            if (i > 720) {
+            if (i > 1000) {
                 isEnd = true;
                 stmt.cancel();
                 stmt.close();
