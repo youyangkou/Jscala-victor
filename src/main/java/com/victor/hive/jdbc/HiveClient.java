@@ -93,14 +93,16 @@ public class HiveClient {
         synchronized (statementMap) {
             //判断statementMap是否包含queryId
             if (!statementMap.containsKey(queryBean)) {
-                throw new RuntimeException(String.format("sql [%s] has been canceled!", queryId));
+                throw new RuntimeException(String.format("sql [%s] has been canceled and clear !", queryId));
             } else {
                 try {
                     stmt = statementMap.get(queryId);
                     stmt.cancel();
                     isSuccess = true;
+                    queryBean.queryState = QueryState.CANCELLED;
                 } catch (Exception e) {
                     System.out.println("cancel失败");
+                    queryBean.queryState = QueryState.FAILED;
                 } finally {
                     if (stmt != null) {
                         stmt.close();
@@ -143,7 +145,7 @@ public class HiveClient {
         boolean isEnd = false;
         int i = 0;
         while (!isEnd) {
-            Tuple2<String, Boolean> execterLogBean = getExecterLog(stmt, true, isEnd, sb);
+            Tuple2<String, Boolean> execterLogBean = getExecterLog(stmt, true, isEnd);
             isEnd = execterLogBean._2;
             sb.append(execterLogBean._1);
 
@@ -163,7 +165,8 @@ public class HiveClient {
     }
 
 
-    private Tuple2<String, Boolean> getExecterLog(HiveStatement stmt, boolean incremental, boolean isEnd, StringBuilder sb) throws SQLException {
+    private Tuple2<String, Boolean> getExecterLog(HiveStatement stmt, boolean incremental, boolean isEnd) throws SQLException {
+        StringBuilder sb = new StringBuilder();
         List<String> queryLog = stmt.getQueryLog(incremental, 100);
         if (queryLog.size() > 0) {
             for (String logItem : queryLog) {
@@ -233,55 +236,6 @@ public class HiveClient {
             conn = DriverManager.getConnection(url, user, password);
         }
         return conn;
-    }
-
-
-    /**
-     * 接口接受到请求之后，判断类型，然后进行封装
-     *
-     * @param project
-     * @param sql
-     * @return
-     */
-    private QueryBean generateQueryBean(String project, String sql, boolean isOnlyQuery) {
-
-        if (StringUtils.isEmpty(project)) {
-            project = "default";
-        }
-        if (StringUtils.isEmpty(sql)) {
-            throw new IllegalArgumentException("sql must not be empty");
-        }
-        if (!sql.toLowerCase().trim().startsWith("select")) {
-            throw new IllegalArgumentException(
-                    "Prohibit submission of queries that do not start with select");
-        }
-        if (sql.trim().endsWith(";")) {
-            sql = sql.substring(0, sql.length() - 1);
-        }
-
-        String queryId = String.valueOf(sql.toLowerCase().replaceAll(" ", "").trim().hashCode());
-        String tmpTable = "";
-
-        if (!isOnlyQuery) {
-            tmpTable = "tmp_" + UUID.randomUUID().toString().replace("-", "_");
-
-            StringBuilder ddlSQL = new StringBuilder("Create Table ")
-                    .append(project)
-                    .append(".")
-                    .append(tmpTable)
-                    .append(" lifecycle 1 as ")
-                    .append(sql);
-
-            sql = ddlSQL.toString();
-        }
-
-        return QueryBean.builder()
-                .project(project)
-                .sql(sql)
-                .tmpTable(tmpTable)
-                .queryId(queryId)
-                .isOnlyQuery(isOnlyQuery)
-                .build();
     }
 
 

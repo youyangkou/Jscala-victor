@@ -4,26 +4,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class QueryManager {
 
-    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss.SSS");
-
     //使用堵塞队列实现生产者-消费者模式使用堵塞队列实现生产者-消费者模式
     public static final BlockingQueue<QueryBean> PENDING_QUEUE = new LinkedBlockingQueue<>();
-
     public static final Map<String, QueryBean> QUERY_MAP = new ConcurrentHashMap<>();
 
     private static AtomicInteger executorThreadNum = new AtomicInteger(0);
     private static int delay = 5;
     private boolean started = false;
-    private HiveClient hiveClient = new HiveClient();
 
+    private HiveClient hiveClient = new HiveClient();
     ScheduledExecutorService executorService;
+
+    public QueryManager(){ }
 
 
     public void start() {
@@ -59,8 +60,10 @@ public class QueryManager {
                                                                //异步提交
                                                                queryBean = hiveClient.executeQuery(queryBean);
 
-                                                               //等待执行，获取执行日志和执行状态
-                                                               queryBean = hiveClient.waitForOperationToComplete(queryBean);
+                                                               if(!queryBean.isOnlyQuery){
+                                                                   //等待执行，获取执行日志和执行状态
+                                                                   queryBean = hiveClient.waitForOperationToComplete(queryBean);
+                                                               }
 
                                                                //将计算结果放进Map中,等待前端获取,然后过期删除.目前简单处理仅是在内存中缓存,后续数据量大可以优化为放在redis等服务中
                                                                QUERY_MAP.put(queryId, queryBean);
@@ -75,8 +78,10 @@ public class QueryManager {
                                                            }
 
 //                                                           log.info("QUERY_BEAN:" + queryBean);
-                                                           System.out.println("QUERY_BEAN:" + queryBean);
+//                                                           System.out.println("QUERY_BEAN:" + queryBean);
                                                        }
+                                                       System.out.println(QUERY_MAP);
+                                                       System.out.println("===========================================================================================");
                                                    }
                                                },
                 0,
@@ -85,9 +90,6 @@ public class QueryManager {
 
         started = true;
     }
-
-
-
 
 
     /**
@@ -101,10 +103,6 @@ public class QueryManager {
     }
 
 
-
-
-
-
     /**
      * 将查询加入阻塞队列中
      *
@@ -113,6 +111,49 @@ public class QueryManager {
     public static void addQueryBeanToPendingQueue(QueryBean queryBean) {
         queryBean.queryState = QueryState.WAITING;
         PENDING_QUEUE.offer(queryBean);
+    }
+
+
+    public static QueryBean generateQueryBean(String project, String sql, boolean isOnlyQuery) {
+
+        if (org.apache.commons.lang3.StringUtils.isEmpty(project)) {
+            project = "default";
+        }
+        if (org.apache.commons.lang3.StringUtils.isEmpty(sql)) {
+            throw new IllegalArgumentException("sql must not be empty");
+        }
+        if (!sql.toLowerCase().trim().startsWith("select")) {
+            throw new IllegalArgumentException(
+                    "Prohibit submission of queries that do not start with select");
+        }
+        if (sql.trim().endsWith(";")) {
+            sql = sql.substring(0, sql.length() - 1);
+        }
+
+        String queryId = String.valueOf(sql.toLowerCase().replaceAll(" ", "").trim().hashCode());
+        String tmpTable = "";
+
+        if (!isOnlyQuery) {
+            tmpTable = "tmp_" + UUID.randomUUID().toString().replace("-", "_");
+
+            StringBuilder ddlSQL = new StringBuilder("Create Table ")
+                    .append(project)
+                    .append(".")
+                    .append(tmpTable)
+//                    .append(" lifecycle 1 as ")
+                    .append(" as ")
+                    .append(sql);
+
+            sql = ddlSQL.toString();
+        }
+
+        return QueryBean.builder()
+                .project(project)
+                .sql(sql)
+                .tmpTable(tmpTable)
+                .queryId(queryId)
+                .isOnlyQuery(isOnlyQuery)
+                .build();
     }
 
 
