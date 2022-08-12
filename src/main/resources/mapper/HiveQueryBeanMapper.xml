@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.victor.console.dao.HiveQueryMapper">
+
+    <resultMap id="BaseResultMap" type="com.victor.console.entity.HiveQueryBean">
+        <result column="query_id" jdbcType="VARCHAR" property="query_id"/>
+        <result column="sql" jdbcType="VARCHAR" property="sql"/>
+        <result column="tmp_table" jdbcType="VARCHAR" property="tmp_table"/>
+        <result column="is_only_query" jdbcType="BOOLEAN" property="is_only_query"/>
+        <result column="query_state" jdbcType="VARCHAR" property="query_state"/>
+        <result column="log" jdbcType="VARCHAR" property="log"/>
+        <result column="update_time" jdbcType="DATETIME" property="update_time"/>
+    </resultMap>
+
+
+    <insert id="addHiveQueryBean" parameterType="com.victor.console.entity.HiveQueryBean">
+            insert into hive_query_bean(query_id,sql,project,tmp_table,is_only_query,log,update_time)
+             values(#{query_id}, #{sql},#{project},#{tmp_table},#{is_only_query},#{log},#{update_time})
+             ON DUPLICATE KEY
+             UPDATE
+             query_id = VALUES(query_id),
+             sql=VALUES(sql),
+             project=VALUES(project),
+             tmp_table=VALUES(tmp_table),
+             is_only_query=VALUES(is_only_query),
+             log=VALUES(log),
+             update_time=VALUES(update_time)
+    </insert>
+
+    <update id="updateHiveQueryBean" parameterType="com.victor.console.entity.HiveQueryBean">
+            update hive_query_bean set
+            query_id = #{query_id},
+            sql = #{sql},
+            project = #{project},
+            tmp_table = #{tmp_table},
+            is_only_query=#{is_only_query},
+            log=#{log},
+            update_time=#{update_time}
+            where query_id = #{query_id}
+    </update>
+
+
+    <update id="deleteHiveQueryBean" parameterType="String">
+            delete hive_query_bean
+            where query_id = #{query_id}
+    </update>
+
+
+</mapper>
