@@ -1,7 +1,5 @@
 package com.victor.hive.jdbc;
 
-import java.util.UUID;
-
 /**
  * @author Gerry
  * @date 2022-08-02

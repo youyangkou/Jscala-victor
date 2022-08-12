@@ -74,7 +74,7 @@ public class QueryManager {
                                                                QUERY_MAP.put(queryId, queryBean);
                                                            }
 
-                                                           log.info("QUERY_BEAN:" + queryBean);
+//                                                           log.info("QUERY_BEAN:" + queryBean);
                                                            System.out.println("QUERY_BEAN:" + queryBean);
                                                        }
                                                    }
