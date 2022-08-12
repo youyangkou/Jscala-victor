@@ -6,11 +6,19 @@ package com.victor.hive.jdbc;
  */
 public enum QueryState {
 
-    WAITING,
-    RUNNING,
-    SUCCESS,
-    FAILED,
-    CANCELLED;
+    WAITING("WAITING"),
+    RUNNING("RUNNING"),
+    SUCCESS("SUCCESS"),
+    FAILED("FAILED"),
+    CANCELLED("CANCELLED");
 
-    private QueryState() {}
+    private String value;
+
+    QueryState(String value) {
+        this.value = value;
+    }
+
+    public String getQueryState() {
+        return value;
+    }
 }

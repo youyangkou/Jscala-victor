@@ -96,10 +96,12 @@ public class HiveClient {
                 throw new RuntimeException(String.format("sql [%s] has been canceled and clear !", queryId));
             } else {
                 try {
-                    stmt = statementMap.get(queryId);
+                    stmt = statementMap.get(queryBean);
+                    System.out.println("开始取消查询");
                     stmt.cancel();
                     isSuccess = true;
                     queryBean.queryState = QueryState.CANCELLED;
+                    System.out.println("取消查询成功");
                 } catch (Exception e) {
                     System.out.println("cancel失败");
                     queryBean.queryState = QueryState.FAILED;
@@ -124,10 +126,7 @@ public class HiveClient {
             CANCELLED;
     */
     public String getQueryState(QueryBean queryBean) throws SQLException {
-        String queryId = queryBean.getQueryId();
-        boolean isSuccess = false;
-        HiveStatement stmt = null;
-        return null;
+        return queryBean.queryState.getQueryState();
     }
 
 
@@ -145,11 +144,14 @@ public class HiveClient {
         boolean isEnd = false;
         int i = 0;
         while (!isEnd) {
-            Tuple2<String, Boolean> execterLogBean = getExecterLog(stmt, true, isEnd);
-            isEnd = execterLogBean._2;
-            sb.append(execterLogBean._1);
-
-            if (isEnd) queryBean.queryState = QueryState.SUCCESS;
+            if (queryBean.queryState == QueryState.CANCELLED) {
+                isEnd = true;
+            } else {
+                Tuple2<String, Boolean> execterLogBean = getExecterLog(stmt, true, isEnd);
+                isEnd = execterLogBean._2;
+                sb.append(execterLogBean._1);
+                if (isEnd) queryBean.queryState = QueryState.SUCCESS;
+            }
             i++;
             if (i > 1000) {
                 isEnd = true;

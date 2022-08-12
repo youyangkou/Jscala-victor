@@ -2,9 +2,8 @@ package com.victor.hive.jdbc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -111,6 +110,12 @@ public class QueryManager {
     public static void addQueryBeanToPendingQueue(QueryBean queryBean) {
         queryBean.queryState = QueryState.WAITING;
         PENDING_QUEUE.offer(queryBean);
+    }
+
+
+
+    public boolean cancelQuery(QueryBean queryBean) throws SQLException {
+        return hiveClient.cancelQuery(queryBean);
     }
 
 
