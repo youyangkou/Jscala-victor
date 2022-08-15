@@ -2,48 +2,51 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.victor.console.dao.HiveQueryMapper">
 
-    <resultMap id="BaseResultMap" type="com.victor.console.entity.HiveQueryBean">
-        <result column="query_id" jdbcType="VARCHAR" property="query_id"/>
-        <result column="sql" jdbcType="VARCHAR" property="sql"/>
-        <result column="tmp_table" jdbcType="VARCHAR" property="tmp_table"/>
-        <result column="is_only_query" jdbcType="BOOLEAN" property="is_only_query"/>
-        <result column="query_state" jdbcType="VARCHAR" property="query_state"/>
-        <result column="log" jdbcType="VARCHAR" property="log"/>
-        <result column="update_time" jdbcType="DATETIME" property="update_time"/>
+    <resultMap id="hiveQueryBeanMap" type="com.victor.console.entity.HiveQueryBean">
+        <result column="query_id"       property="queryId"/>
+        <result column="query_sql"      property="querySql"/>
+        <result column="project"        property="project"/>
+        <result column="tmp_table"      property="tmpTable"/>
+        <result column="is_only_query"  property="isOnlyQuery"/>
+        <result column="query_state"    property="queryState"/>
+        <result column="log"            property="log"/>
+        <result column="update_time"    property="updateTime"/>
     </resultMap>
 
 
     <insert id="addHiveQueryBean" parameterType="com.victor.console.entity.HiveQueryBean">
-            insert into hive_query_bean(query_id,sql,project,tmp_table,is_only_query,log,update_time)
-             values(#{query_id}, #{sql},#{project},#{tmp_table},#{is_only_query},#{log},#{update_time})
+            insert into hive_query_bean(query_id,query_sql,project,tmp_table,is_only_query,query_state,log,update_time)
+             values(#{queryId}, #{querySql},#{project},#{tmpTable},#{isOnlyQuery},#{queryState},#{log},#{updateTime})
              ON DUPLICATE KEY
              UPDATE
              query_id = VALUES(query_id),
-             sql=VALUES(sql),
+             query_sql=VALUES(query_sql),
              project=VALUES(project),
              tmp_table=VALUES(tmp_table),
              is_only_query=VALUES(is_only_query),
+             query_state=VALUES(query_state),
              log=VALUES(log),
              update_time=VALUES(update_time)
     </insert>
 
     <update id="updateHiveQueryBean" parameterType="com.victor.console.entity.HiveQueryBean">
             update hive_query_bean set
-            query_id = #{query_id},
-            sql = #{sql},
+            query_id = #{queryId},
+            query_sql = #{querySql},
             project = #{project},
-            tmp_table = #{tmp_table},
-            is_only_query=#{is_only_query},
+            tmp_table = #{tmpTable},
+            is_only_query=#{isOnlyQuery},
+            query_state=#{queryState},
             log=#{log},
-            update_time=#{update_time}
-            where query_id = #{query_id}
+            update_time=#{updateTime}
+            where query_id = #{queryId}
     </update>
 
 
-    <update id="deleteHiveQueryBean" parameterType="String">
-            delete hive_query_bean
-            where query_id = #{query_id}
-    </update>
+    <delete id="deleteHiveQueryBean" parameterType="String">
+            delete from hive_query_bean
+            where query_id = #{queryId}
+    </delete>
 
 
 </mapper>

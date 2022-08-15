@@ -1,9 +1,10 @@
 package com.victor.console.entity;
 
-import com.victor.hive.jdbc.QueryState;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Builder;
 import lombok.Data;
-import org.apache.hive.jdbc.HiveStatement;
+import java.util.Date;
 
 /**
  * @author Gerry
@@ -11,16 +12,19 @@ import org.apache.hive.jdbc.HiveStatement;
  */
 @Data
 @Builder
+@TableName("hive_query_bean")
 public class HiveQueryBean {
     /**
      * the hashcode of query
      */
+    @TableField(value = "query_id")
     String queryId;
 
     /**
      * the recieve query sql | the ddl of tmp_table
      */
-    String sql;
+    @TableField(value = "query_sql")
+    String querySql;
 
     /**
      * the db of hive
@@ -30,21 +34,28 @@ public class HiveQueryBean {
     /**
      * the tmp table
      */
+    @TableField(value = "tmp_table")
     String tmpTable;
 
     /**
      * is requeried to create a tmp table
      */
+    @TableField(value = "is_only_query")
     boolean isOnlyQuery;
 
     /**
      * the state of query
      */
+    @TableField(value = "query_state")
     String queryState;
 
     /**
      * the log of query
      */
     String log;
+
+
+    @TableField(value = "update_time")
+    Date updateTime;
 
 }

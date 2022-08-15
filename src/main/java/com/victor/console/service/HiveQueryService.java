@@ -1,7 +1,6 @@
 package com.victor.console.service;
 
 import com.victor.console.entity.HiveQueryBean;
-import org.springframework.stereotype.Service;
 
 /**
  * @author Gerry
@@ -9,5 +8,11 @@ import org.springframework.stereotype.Service;
  */
 public interface HiveQueryService {
 
-    public HiveQueryBean add(HiveQueryBean hiveQueryBean);
+    HiveQueryBean add(HiveQueryBean hiveQueryBean);
+
+    HiveQueryBean getHiveQueryBeanById(String queryId);
+
+    void delete(String queryId);
+
+    HiveQueryBean update(HiveQueryBean hiveQueryBean);
 }
