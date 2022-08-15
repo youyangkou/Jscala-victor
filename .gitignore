@@ -5,7 +5,7 @@
 .gz
 .DS_Store
 .target
-.idea/
+.idea
 .run/
 target/
 dist/

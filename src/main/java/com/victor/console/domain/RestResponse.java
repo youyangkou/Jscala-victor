@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package com.victor.domain;
+package com.victor.console.domain;
 
 import java.util.HashMap;
 

@@ -2,7 +2,7 @@ package com.victor.console.controller;
 
 import com.victor.console.entity.HiveQueryBean;
 import com.victor.console.service.HiveQueryService;
-import com.victor.domain.RestResponse;
+import com.victor.console.domain.RestResponse;
 import com.victor.hive.jdbc.QueryBean;
 import com.victor.hive.jdbc.QueryManager;
 import com.victor.hive.jdbc.QueryState;

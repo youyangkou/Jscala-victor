@@ -1,4 +1,4 @@
-package com.victor.domain;
+package com.victor.console.domain;
 
 /**
  * @author Gerry
