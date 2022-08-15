@@ -1,4 +1,4 @@
-package com.victor.hive.jdbc;
+package com.victor.console.agent;
 
 import com.google.common.base.Objects;
 import lombok.Builder;
@@ -12,7 +12,7 @@ import org.apache.hive.jdbc.HiveStatement;
  */
 @Data
 @Builder
-public class QueryBean {
+public class QueryInstance {
 
     /**
      * the hashcode of query
@@ -27,7 +27,7 @@ public class QueryBean {
     /**
      * the recieve query sql | the ddl of tmp_table
      */
-    String sql;
+    String querySql;
 
     /**
      * the db of hive
@@ -65,24 +65,24 @@ public class QueryBean {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        QueryBean queryBean = (QueryBean) o;
-        return isOnlyQuery == queryBean.isOnlyQuery &&
-                Objects.equal(queryId, queryBean.queryId) &&
-                Objects.equal(sql, queryBean.sql) &&
-                Objects.equal(project, queryBean.project) &&
-                Objects.equal(tmpTable, queryBean.tmpTable);
+        QueryInstance queryInstance = (QueryInstance) o;
+        return isOnlyQuery == queryInstance.isOnlyQuery &&
+                Objects.equal(queryId, queryInstance.queryId) &&
+                Objects.equal(querySql, queryInstance.querySql) &&
+                Objects.equal(project, queryInstance.project) &&
+                Objects.equal(tmpTable, queryInstance.tmpTable);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(queryId, sql, project, tmpTable, isOnlyQuery);
+        return Objects.hashCode(queryId, querySql, project, tmpTable, isOnlyQuery);
     }
 
 
     public static void main(String[] args) {
-        QueryBean queryBean = QueryBean.builder().build();
-        queryBean.queryState = QueryState.SUCCESS;
-        System.out.println(queryBean);
+        QueryInstance queryInstance = QueryInstance.builder().build();
+        queryInstance.queryState = QueryState.SUCCESS;
+        System.out.println(queryInstance);
     }
 
 

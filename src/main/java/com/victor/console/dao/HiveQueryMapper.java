@@ -20,7 +20,7 @@ public interface HiveQueryMapper extends BaseMapper<HiveQueryBean> {
     void deleteHiveQueryBean(String queryId);
 
     @Select("select * from hive_query_bean where query_id=#{query_id}")
-    public List<HiveQueryBean> getHiveQueryBeanById(String query_id);
+    List<HiveQueryBean> get(String query_id);
 
 
 }

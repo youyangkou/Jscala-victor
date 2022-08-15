@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Builder;
 import lombok.Data;
+
 import java.util.Date;
 
 /**
@@ -14,6 +15,7 @@ import java.util.Date;
 @Builder
 @TableName("hive_query_bean")
 public class HiveQueryBean {
+
     /**
      * the hashcode of query
      */
@@ -57,5 +59,6 @@ public class HiveQueryBean {
 
     @TableField(value = "update_time")
     Date updateTime;
+
 
 }

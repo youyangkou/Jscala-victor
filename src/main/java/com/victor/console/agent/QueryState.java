@@ -1,4 +1,4 @@
-package com.victor.hive.jdbc;
+package com.victor.console.agent;
 
 /**
  * @author Gerry

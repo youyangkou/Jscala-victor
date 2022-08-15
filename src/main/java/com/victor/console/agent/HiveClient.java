@@ -1,8 +1,9 @@
-package com.victor.hive.jdbc;
+package com.victor.console.agent;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hive.jdbc.HiveStatement;
 import org.apache.parquet.Strings;
@@ -11,35 +12,38 @@ import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.sql.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Gerry
  * @date 2022-08-08
  */
+@Slf4j
 public class HiveClient {
 
     private static String driverName = "org.apache.hive.jdbc.HiveDriver";
     private static String url = "jdbc:hive2://zjk-al-bigdata-test-00:10000/default";
     private static String user = "root";
     private static String password = "";
-    private static Map<QueryBean, HiveStatement> statementMap = new ConcurrentHashMap<>();
+    private static Map<QueryInstance, HiveStatement> statementMap = new ConcurrentHashMap<>();
     private Connection conn;
 
 
     /**
      * 执行查询
      *
-     * @param queryBean 封装的查询实体
+     * @param queryInstance 封装的查询实体
      * @return
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    public QueryBean executeQuery(QueryBean queryBean) throws ClassNotFoundException, SQLException {
+    public QueryInstance executeQuery(QueryInstance queryInstance) throws ClassNotFoundException, SQLException {
         String resultStr = "";
-        String queryId = queryBean.getQueryId();
-        String sql = queryBean.getSql();
+        String queryId = queryInstance.getQueryId();
+        String sql = queryInstance.getQuerySql();
 
         if (conn == null) {
             conn = getConn();
@@ -50,67 +54,70 @@ public class HiveClient {
             //检查该query是否正在运行
             this.checkRunningQueue(queryId);
             stmt = (HiveStatement) conn.createStatement();
-            queryBean.stmt = stmt;
+            queryInstance.stmt = stmt;
 
             if (!StringUtils.isEmpty(queryId)) {
-                if (queryBean.isOnlyQuery) {
+                if (queryInstance.isOnlyQuery) {
                     try {
                         resultStr = parseResultSet(stmt.executeQuery(sql));
-                        queryBean.queryState = QueryState.SUCCESS;
+                        queryInstance.queryState = QueryState.SUCCESS;
                     } finally {
                         if (stmt != null) {
                             stmt.close();
                         }
-                        if (!Strings.isNullOrEmpty(queryId) && statementMap.containsKey(queryBean)) {
-                            statementMap.remove(queryBean);
+                        if (!Strings.isNullOrEmpty(queryId) && statementMap.containsKey(queryInstance)) {
+                            statementMap.remove(queryInstance);
                         }
                     }
                 } else {
                     //需要异步执行的query,缓存其HiveStatement对象,以提供cancel的功能
-                    statementMap.put(queryBean, stmt);
+                    statementMap.put(queryInstance, stmt);
                     stmt.executeAsync(sql);
-                    queryBean.queryState = QueryState.RUNNING;
+                    queryInstance.queryState = QueryState.RUNNING;
                 }
             }
         }
-        queryBean.result = resultStr;
-        return queryBean;
+        queryInstance.result = resultStr;
+        return queryInstance;
     }
 
 
     /**
      * 取消查询
      *
-     * @param queryBean
+     * @param queryInstance
      * @return
      * @throws SQLException
      */
-    public boolean cancelQuery(QueryBean queryBean) throws SQLException {
-        String queryId = queryBean.getQueryId();
+    public boolean cancelQuery(QueryInstance queryInstance) throws SQLException {
+        String queryId = queryInstance.getQueryId();
         boolean isSuccess = false;
         HiveStatement stmt = null;
 
         synchronized (statementMap) {
             //判断statementMap是否包含queryId
-            if (!statementMap.containsKey(queryBean)) {
+            if (!statementMap.containsKey(queryInstance)) {
                 throw new RuntimeException(String.format("sql [%s] has been canceled and clear !", queryId));
             } else {
                 try {
-                    stmt = statementMap.get(queryBean);
+                    stmt = statementMap.get(queryInstance);
                     System.out.println("开始取消查询");
+                    log.info("开始取消查询");
                     stmt.cancel();
                     isSuccess = true;
-                    queryBean.queryState = QueryState.CANCELLED;
+                    queryInstance.queryState = QueryState.CANCELLED;
                     System.out.println("取消查询成功");
+                    log.info("取消查询成功");
                 } catch (Exception e) {
                     System.out.println("cancel失败");
-                    queryBean.queryState = QueryState.FAILED;
+                    queryInstance.queryState = QueryState.FAILED;
+                    log.info("取消查询失败");
                 } finally {
                     if (stmt != null) {
                         stmt.close();
                     }
-                    if (!Strings.isNullOrEmpty(queryId) && statementMap.containsKey(queryBean)) {
-                        statementMap.remove(queryBean);
+                    if (!Strings.isNullOrEmpty(queryId) && statementMap.containsKey(queryInstance)) {
+                        statementMap.remove(queryInstance);
                     }
                 }
             }
@@ -119,51 +126,41 @@ public class HiveClient {
     }
 
 
-    /*
-            RUNNING,
-            SUCCESS,
-            FAILED,
-            CANCELLED;
-    */
-    public String getQueryState(QueryBean queryBean) throws SQLException {
-        return queryBean.queryState.getQueryState();
-    }
-
-
     /**
      * 等待异步执行，获取执行日志
      *
-     * @param queryBean
+     * @param queryInstance
      * @return
      * @throws Exception
      */
-    public QueryBean waitForOperationToComplete(QueryBean queryBean) throws Exception {
-        HiveStatement stmt = queryBean.stmt;
+    public QueryInstance waitForOperationToComplete(QueryInstance queryInstance) throws Exception {
+        HiveStatement stmt = queryInstance.stmt;
         StringBuilder sb = new StringBuilder();
 
         boolean isEnd = false;
         int i = 0;
         while (!isEnd) {
-            if (queryBean.queryState == QueryState.CANCELLED) {
+            if (queryInstance.queryState == QueryState.CANCELLED) {
                 isEnd = true;
             } else {
                 Tuple2<String, Boolean> execterLogBean = getExecterLog(stmt, true, isEnd);
                 isEnd = execterLogBean._2;
                 sb.append(execterLogBean._1);
-                if (isEnd) queryBean.queryState = QueryState.SUCCESS;
+                if (isEnd) queryInstance.queryState = QueryState.SUCCESS;
             }
             i++;
             if (i > 1000) {
+                log.info("查询超时被关闭");
                 isEnd = true;
                 stmt.cancel();
                 stmt.close();
-                queryBean.queryState = QueryState.FAILED;
+                queryInstance.queryState = QueryState.FAILED;
             }
             Thread.sleep(5000);
         }
-        queryBean.log = sb.toString();
+        queryInstance.log = sb.toString();
 
-        return queryBean;
+        return queryInstance;
     }
 
 
@@ -190,19 +187,19 @@ public class HiveClient {
     private void checkRunningQueue(String queryId) {
         if (Strings.isNullOrEmpty(queryId)) return;
 
-        Set<QueryBean> sets = getQueryBeansInRunningQueueByQueryId(queryId);
+        Set<QueryInstance> sets = getQueryBeansInRunningQueueByQueryId(queryId);
         if (sets.isEmpty()) return;
 
         throw new RuntimeException(String.format("sql [%s] has in the running queue,please wait!", queryId));
     }
 
 
-    private static Set<QueryBean> getQueryBeansInRunningQueueByQueryId(String queryId) {
-        return Sets.filter(statementMap.keySet(), new Predicate<QueryBean>() {
+    private static Set<QueryInstance> getQueryBeansInRunningQueueByQueryId(String queryId) {
+        return Sets.filter(statementMap.keySet(), new Predicate<QueryInstance>() {
             @Override
-            public boolean apply(@Nullable QueryBean queryBean) {
-                assert queryBean != null;
-                return queryBean.getQueryId().equals(queryId);
+            public boolean apply(@Nullable QueryInstance queryInstance) {
+                assert queryInstance != null;
+                return queryInstance.getQueryId().equals(queryId);
             }
         });
     }

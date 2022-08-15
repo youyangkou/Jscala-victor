@@ -1,11 +1,12 @@
 package com.victor.console.controller;
 
+import com.victor.console.agent.QueryInstance;
+import com.victor.console.agent.QueryManager;
+import com.victor.console.agent.QueryState;
+import com.victor.console.domain.ResponseCode;
+import com.victor.console.domain.RestResponse;
 import com.victor.console.entity.HiveQueryBean;
 import com.victor.console.service.HiveQueryService;
-import com.victor.console.domain.RestResponse;
-import com.victor.hive.jdbc.QueryBean;
-import com.victor.hive.jdbc.QueryManager;
-import com.victor.hive.jdbc.QueryState;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,42 +28,123 @@ public class HiveQueryController {
     @Autowired
     HiveQueryService hiveQueryService;
 
+    @Autowired
+    QueryManager queryManager;
+
+    /**
+     * 新增查询
+     *
+     * @param query_sql
+     * @return
+     */
     @PostMapping("add")
-    public RestResponse create(@ApiParam(value = "sql") String sql) {
-        QueryBean queryBean = QueryManager.generateQueryBean(null, sql, false);
-        HiveQueryBean hiveQueryBean = HiveQueryBean.builder()
-                .queryId(queryBean.getQueryId())
-                .querySql(queryBean.getSql())
-                .project(queryBean.getProject())
-                .queryState(QueryState.WAITING.getQueryState())
-                .isOnlyQuery(false)
-                .tmpTable(queryBean.getTmpTable())
-                .updateTime(new Date(System.currentTimeMillis()))
-                .log("")
-                .build();
+    public RestResponse add(@ApiParam(value = "query_sql") String query_sql) {
+        QueryInstance queryInstance = queryManager.generateQueryBean(null, query_sql, false);
+
+        HiveQueryBean hiveQueryBean;
+        if (hiveQueryService.get(queryInstance.getQueryId()) != null) {
+            return RestResponse.fail("This query has been added,Please do not add it repeatedly ", ResponseCode.CODE_FAIL);
+        } else {
+            hiveQueryBean = HiveQueryBean.builder()
+                    .queryId(queryInstance.getQueryId())
+                    .querySql(queryInstance.getQuerySql())
+                    .project(queryInstance.getProject())
+                    .queryState(QueryState.WAITING.getQueryState())
+                    .isOnlyQuery(false)
+                    .tmpTable(queryInstance.getTmpTable())
+                    .updateTime(new Date(System.currentTimeMillis()))
+                    .log("")
+                    .build();
+
+            queryManager.addQueryBeanToPendingQueue(queryInstance);
+            queryManager.start();
+        }
+
         return RestResponse.success(hiveQueryService.add(hiveQueryBean));
+    }
+
+
+    /**
+     * 查询状态
+     *
+     * @param query_id
+     * @return
+     */
+    @PostMapping("state")
+    public RestResponse state(@ApiParam(value = "query_id") String query_id) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
+        if (hiveQueryBean != null) {
+            return RestResponse.success(hiveQueryBean.getQueryState());
+        } else {
+            return RestResponse.fail("sorry,this query has no state,please check it!", ResponseCode.CODE_FAIL);
+        }
+    }
+
+
+    /**
+     * 查询日志
+     *
+     * @param query_id
+     * @return
+     */
+    @PostMapping("log")
+    public RestResponse log(@ApiParam(value = "query_id") String query_id) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
+        if (hiveQueryBean != null) {
+            return RestResponse.success(hiveQueryBean.getLog());
+        } else {
+            return RestResponse.fail("sorry,this query has no log,please check it!", ResponseCode.CODE_FAIL);
+        }
+    }
+
+
+    /**
+     * 取消查询
+     *
+     * @param query_id
+     * @return
+     */
+    @PostMapping("cancel")
+    public RestResponse cancel(@ApiParam(value = "query_id") String query_id) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
+
+        if (hiveQueryBean != null
+                && hiveQueryBean.getQueryState() != QueryState.SUCCESS.getQueryState()
+                && hiveQueryBean.getQueryState() != QueryState.FAILED.getQueryState()
+                && hiveQueryBean.getQueryState() != QueryState.CANCELLED.getQueryState()) {
+            QueryInstance queryInstance = queryManager.QUERY_MAP.get(hiveQueryBean.getQueryId());
+
+            try {
+                queryManager.cancelQuery(queryInstance);
+                return RestResponse.success(hiveQueryBean);
+            } catch (Exception e) {
+                return RestResponse.fail("this query cancel failed!", ResponseCode.CODE_FAIL);
+            }
+        } else {
+            return RestResponse.fail("sorry,this query can't be cancel!", ResponseCode.CODE_FAIL);
+        }
     }
 
 
     @PostMapping("select")
     public RestResponse select(@ApiParam(value = "query_id") String query_id) {
-        return RestResponse.success(hiveQueryService.getHiveQueryBeanById(query_id));
+        return RestResponse.success(hiveQueryService.get(query_id));
     }
 
 
     @PostMapping("delete")
     public RestResponse delete(@ApiParam(value = "query_id") String query_id) {
-        HiveQueryBean hiveQueryBeanById = hiveQueryService.getHiveQueryBeanById(query_id);
+        HiveQueryBean hiveQueryBeanById = hiveQueryService.get(query_id);
         hiveQueryService.delete(query_id);
         return RestResponse.success(hiveQueryBeanById);
     }
 
 
     @PostMapping("update")
-    public RestResponse update(@ApiParam(value = "query_id") String query_id,@ApiParam(value = "query_state") String query_state) {
-        HiveQueryBean hiveQueryBean = hiveQueryService.getHiveQueryBeanById(query_id);
+    public RestResponse update(@ApiParam(value = "query_id") String query_id, @ApiParam(value = "query_state") String query_state) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
         hiveQueryBean.setQueryState(query_state);
-        return RestResponse.success( hiveQueryService.update(hiveQueryBean));
+        return RestResponse.success(hiveQueryService.update(hiveQueryBean));
     }
 
 }

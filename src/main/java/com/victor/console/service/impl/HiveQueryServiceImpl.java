@@ -6,6 +6,8 @@ import com.victor.console.entity.HiveQueryBean;
 import com.victor.console.service.HiveQueryService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 
 /**
  * @author Gerry
@@ -21,8 +23,13 @@ public class HiveQueryServiceImpl extends ServiceImpl<HiveQueryMapper, HiveQuery
     }
 
     @Override
-    public HiveQueryBean getHiveQueryBeanById(String queryId) {
-        return this.baseMapper.getHiveQueryBeanById(queryId).get(0);
+    public HiveQueryBean get(String queryId) {
+        List<HiveQueryBean> hiveQueryBeans = this.baseMapper.get(queryId);
+        if (hiveQueryBeans.size() > 0) {
+            return hiveQueryBeans.get(0);
+        } else {
+            return null;
+        }
     }
 
     @Override

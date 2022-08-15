@@ -10,7 +10,7 @@ public interface HiveQueryService {
 
     HiveQueryBean add(HiveQueryBean hiveQueryBean);
 
-    HiveQueryBean getHiveQueryBeanById(String queryId);
+    HiveQueryBean get(String queryId);
 
     void delete(String queryId);
 

@@ -1,4 +1,4 @@
-package com.victor.hive.jdbc;
+package com.victor.hive.agent;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -154,7 +154,7 @@ public class QueryManager {
 
         return QueryBean.builder()
                 .project(project)
-                .sql(sql)
+                .querySql(sql)
                 .tmpTable(tmpTable)
                 .queryId(queryId)
                 .isOnlyQuery(isOnlyQuery)
