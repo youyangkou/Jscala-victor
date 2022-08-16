@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -39,7 +40,6 @@ public class QueryManager {
             return;
         }
 
-        System.out.println("开始创建线程池");
         log.info("开始创建线程池");
         executorService = Executors.newScheduledThreadPool(5, new ThreadFactory() {
             @Override
@@ -50,7 +50,6 @@ public class QueryManager {
             }
         });
 
-        System.out.println("开始定时执行SQL");
         log.info("开始定时执行SQL");
         //定时执行sql计算任务
         executorService.scheduleWithFixedDelay(new Runnable() {
@@ -58,7 +57,6 @@ public class QueryManager {
                                                    public void run() {
                                                        while (PENDING_QUEUE.size() > 0) {
                                                            log.info("PENDING_QUEUE size:" + PENDING_QUEUE.size());
-                                                           System.out.println("PENDING_QUEUE size:" + PENDING_QUEUE.size());
 
                                                            HiveQueryBean hiveQueryBean;
                                                            QueryInstance queryInstance = null;
@@ -92,11 +90,7 @@ public class QueryManager {
                                                            }
 
                                                            log.info("QUERY_BEAN:" + queryInstance);
-                                                           System.out.println("QUERY_BEAN:" + queryInstance);
                                                        }
-//                                                       System.out.println(QUERY_MAP);
-                                                       System.out.println("队列执行结束");
-                                                       System.out.println("===========================================================================================");
                                                    }
                                                },
                 0,
@@ -205,6 +199,7 @@ public class QueryManager {
         HiveQueryBean hiveQueryBean = hiveQueryService.get(queryInstance.queryId);
         hiveQueryBean.setQueryState(queryInstance.queryState.getQueryState());
         hiveQueryBean.setLog(queryInstance.log);
+        hiveQueryBean.setUpdateTime(new Date(System.currentTimeMillis()));
         hiveQueryService.update(hiveQueryBean);
     }
 
