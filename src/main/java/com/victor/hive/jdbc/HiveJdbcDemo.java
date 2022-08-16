@@ -25,7 +25,7 @@ public class HiveJdbcDemo {
             System.exit(1);
         }
 
-        Connection con = DriverManager.getConnection("jdbc:hive2://zjk-al-bigdata-test-00:10000/default", "root", "");
+        Connection con = DriverManager.getConnection("jdbc:hive2://localhost:10000/default", "root", "");
 
         //        HiveStatement stmt = (HiveStatement) con.createStatement();
         /*String tableName = "test_hive_driver_table";
@@ -35,9 +35,6 @@ public class HiveJdbcDemo {
         String ddl = "create table " + tableName + " as select * from db_real_sync_odps where tb='cdc_sync' and ds='20220720'";
         stmt.execute(ddl);
         System.out.println(ddl);*/
-
-
-
 
 
         // show tables
@@ -123,3 +120,4 @@ public class HiveJdbcDemo {
 
 
 }
+

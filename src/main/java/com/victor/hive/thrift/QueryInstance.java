@@ -7,9 +7,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Gerry
@@ -18,7 +16,7 @@ import java.util.Map;
 @Slf4j
 public class QueryInstance {
 
-    private static String host = "zjk-al-bigdata-test-00";
+    private static String host = "localhost";
     private static int port = 10000;
     private static String username = "root";
     private static String passsword = "";
@@ -34,8 +32,7 @@ public class QueryInstance {
             client = new TCLIService.Client(new TBinaryProtocol(transport));
             transport.open();
         } catch (TTransportException e) {
-//            log.info("hive collection error!");
-            System.out.println("hive collection error!");
+            log.info("hive collection error!");
         }
     }
 

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 该执行类必须与Hive节点部署在同一节点，且可直接执行hive -e命令
+ *
  * @author Gerry
  * @date 2022-08-01
  */
