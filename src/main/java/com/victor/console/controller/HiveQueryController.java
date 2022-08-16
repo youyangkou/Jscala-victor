@@ -38,8 +38,8 @@ public class HiveQueryController {
      * @return
      */
     @PostMapping("add")
-    public RestResponse add(@ApiParam(value = "query_sql") String query_sql) {
-        QueryInstance queryInstance = queryManager.generateQueryBean(null, query_sql, false);
+    public RestResponse add(@ApiParam(value = "query_sql") String query_sql, @ApiParam(value = "project") String project) {
+        QueryInstance queryInstance = queryManager.generateQueryBean(project, query_sql, false);
 
         HiveQueryBean hiveQueryBean;
         if (hiveQueryService.get(queryInstance.getQueryId()) != null) {
