@@ -4,9 +4,9 @@
     <property name="log.path" value="logs"/>
     <property name="log.maxHistory" value="15"/>
     <property name="log.colorPattern"
-              value="%d{yyyy-MM-dd HH:mm:ss} | %highlight(%-5level) | %boldYellow(%thread) | %boldGreen(%logger) | [ RELX-AGENT ] %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss} | %highlight(%-5level) | %boldYellow(%thread) | %boldGreen(%logger) | [ GERRY-AGENT ] %msg%n"/>
     <property name="log.pattern"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - [ RELX-AGENT ] %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - [ GERRY-AGENT ] %msg%n"/>
 
     <!--输出到控制台-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
