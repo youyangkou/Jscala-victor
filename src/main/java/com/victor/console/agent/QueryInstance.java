@@ -54,7 +54,6 @@ public class QueryInstance {
      */
     String log;
 
-
     /**
      * the result of query
      */

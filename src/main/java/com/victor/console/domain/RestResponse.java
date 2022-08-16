@@ -22,7 +22,7 @@ package com.victor.console.domain;
 import java.util.HashMap;
 
 /**
- * @author benjobs
+ * @author Gerry
  */
 public class RestResponse extends HashMap<String, Object> {
 

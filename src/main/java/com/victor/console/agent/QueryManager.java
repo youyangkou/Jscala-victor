@@ -67,33 +67,27 @@ public class QueryManager {
                                                                //从堵塞队列中取出一个计算任务
                                                                queryInstance = PENDING_QUEUE.take();
                                                                queryId = queryInstance.getQueryId();
-                                                               //异步提交
+                                                               //异步提交查询到集群
                                                                queryInstance = hiveClient.executeQuery(queryInstance);
+                                                               changeHiveQueryState(queryInstance);
+
 
                                                                if (!queryInstance.isOnlyQuery) {
                                                                    //等待执行，获取执行日志和执行状态
                                                                    queryInstance = hiveClient.waitForOperationToComplete(queryInstance);
-                                                                   //更新状态
-                                                                   hiveQueryBean = hiveQueryService.get(queryInstance.queryId);
-                                                                   hiveQueryBean.setQueryState(queryInstance.queryState.getQueryState());
-                                                                   hiveQueryBean.setLog(queryInstance.log);
-                                                                   hiveQueryService.update(hiveQueryBean);
+                                                                   changeHiveQueryState(queryInstance);
                                                                }
 
                                                                //将计算结果放进Map中,等待前端获取,然后过期删除.目前简单处理仅是在内存中缓存,后续数据量大可以优化为放在redis等服务中
                                                                QUERY_MAP.put(queryId, queryInstance);
                                                            } catch (Exception e) {
-                                                               e.printStackTrace();
+//                                                               e.printStackTrace();
                                                                if (queryInstance == null || StringUtils.isEmpty(queryId)) {
                                                                    return;
                                                                }
 
                                                                queryInstance.queryState = QueryState.FAILED;
-                                                               //更新状态
-                                                               hiveQueryBean = hiveQueryService.get(queryInstance.queryId);
-                                                               hiveQueryBean.setQueryState(queryInstance.queryState.getQueryState());
-                                                               hiveQueryBean.setLog(queryInstance.log);
-                                                               hiveQueryService.update(hiveQueryBean);
+                                                               changeHiveQueryState(queryInstance);
                                                                QUERY_MAP.put(queryId, queryInstance);
                                                            }
 
@@ -145,11 +139,7 @@ public class QueryManager {
     public boolean cancelQuery(QueryInstance queryInstance) throws SQLException {
         boolean result = hiveClient.cancelQuery(queryInstance);
         if (result) {
-            //更新状态
-            HiveQueryBean hiveQueryBean = hiveQueryService.get(queryInstance.queryId);
-            hiveQueryBean.setQueryState(queryInstance.queryState.getQueryState());
-            hiveQueryBean.setLog(queryInstance.log);
-            hiveQueryService.update(hiveQueryBean);
+            changeHiveQueryState(queryInstance);
         }
         return result;
     }
@@ -190,7 +180,6 @@ public class QueryManager {
                     .append(project)
                     .append(".")
                     .append(tmpTable)
-//                    .append(" lifecycle 1 as ")
                     .append(" as ")
                     .append(sql);
 
@@ -204,6 +193,19 @@ public class QueryManager {
                 .queryId(queryId)
                 .isOnlyQuery(isOnlyQuery)
                 .build();
+    }
+
+
+    /**
+     * 更新数据库中查询状态和执行日志
+     *
+     * @param queryInstance
+     */
+    private void changeHiveQueryState(QueryInstance queryInstance) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(queryInstance.queryId);
+        hiveQueryBean.setQueryState(queryInstance.queryState.getQueryState());
+        hiveQueryBean.setLog(queryInstance.log);
+        hiveQueryService.update(hiveQueryBean);
     }
 
 

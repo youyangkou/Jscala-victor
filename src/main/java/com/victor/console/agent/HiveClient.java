@@ -36,12 +36,9 @@ public class HiveClient {
      * 执行查询
      *
      * @param queryInstance 封装的查询实体
-     * @return
-     * @throws ClassNotFoundException
-     * @throws SQLException
+     * @return QueryInstance
      */
     public QueryInstance executeQuery(QueryInstance queryInstance) throws ClassNotFoundException, SQLException {
-        String resultStr = "";
         String queryId = queryInstance.getQueryId();
         String sql = queryInstance.getQuerySql();
 
@@ -59,7 +56,7 @@ public class HiveClient {
             if (!StringUtils.isEmpty(queryId)) {
                 if (queryInstance.isOnlyQuery) {
                     try {
-                        resultStr = parseResultSet(stmt.executeQuery(sql));
+                        queryInstance.result = parseResultSet(stmt.executeQuery(sql));
                         queryInstance.queryState = QueryState.SUCCESS;
                     } finally {
                         if (stmt != null) {
@@ -77,7 +74,7 @@ public class HiveClient {
                 }
             }
         }
-        queryInstance.result = resultStr;
+
         return queryInstance;
     }
 
