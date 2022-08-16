@@ -117,6 +117,7 @@ public class HiveQueryController {
             QueryInstance queryInstance = queryManager.QUERY_MAP.get(hiveQueryBean.getQueryId());
             try {
                 queryManager.cancelQuery(queryInstance);
+                hiveQueryBean.setQueryState("CANCELLED");
                 return RestResponse.success(hiveQueryBean);
             } catch (Exception e) {
                 return RestResponse.fail("this query cancel failed!", ResponseCode.CODE_FAIL);

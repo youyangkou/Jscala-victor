@@ -73,23 +73,24 @@ public class QueryManager {
                                                                    //等待执行，获取执行日志和执行状态
                                                                    queryInstance = hiveClient.waitForOperationToComplete(queryInstance);
                                                                    changeHiveQueryState(queryInstance);
+                                                                   //执行成功，将queryId从QUERY_MAP中删除
+                                                                   if (queryInstance.queryState == QueryState.SUCCESS) {
+                                                                       QUERY_MAP.remove(queryId);
+                                                                   }
                                                                }
-
-                                                               //将计算结果放进Map中,等待前端获取,然后过期删除.目前简单处理仅是在内存中缓存,后续数据量大可以优化为放在redis等服务中
-                                                               QUERY_MAP.put(queryId, queryInstance);
                                                            } catch (Exception e) {
-//                                                               e.printStackTrace();
                                                                if (queryInstance == null || StringUtils.isEmpty(queryId)) {
                                                                    return;
                                                                }
 
                                                                queryInstance.queryState = QueryState.FAILED;
                                                                changeHiveQueryState(queryInstance);
-                                                               QUERY_MAP.put(queryId, queryInstance);
+                                                               QUERY_MAP.remove(queryId);
                                                            }
 
                                                            log.info("QUERY_BEAN:" + queryInstance);
                                                        }
+                                                       log.info("PENDING_QUEUE size:" + PENDING_QUEUE.size());
                                                    }
                                                },
                 0,
@@ -117,7 +118,9 @@ public class QueryManager {
      * @param queryInstance
      */
     public static void addQueryBeanToPendingQueue(QueryInstance queryInstance) {
+        String queryId = queryInstance.queryId;
         queryInstance.queryState = QueryState.WAITING;
+        QUERY_MAP.put(queryId, queryInstance);
         PENDING_QUEUE.offer(queryInstance);
     }
 
@@ -130,9 +133,19 @@ public class QueryManager {
      * @throws SQLException
      */
     public boolean cancelQuery(QueryInstance queryInstance) throws SQLException {
-        boolean result = hiveClient.cancelQuery(queryInstance);
+        boolean result = false;
+        //queryState为WAITING的直接从队列中删除即可
+        if (queryInstance.queryState == QueryState.WAITING) {
+            PENDING_QUEUE.remove(queryInstance);
+            QUERY_MAP.remove(queryInstance.queryId);
+            result = true;
+        } else {
+            result = hiveClient.cancelQuery(queryInstance);
+        }
         if (result) {
+            queryInstance.queryState = QueryState.CANCELLED;
             changeHiveQueryState(queryInstance);
+            QUERY_MAP.remove(queryInstance.queryId);
         }
         return result;
     }
