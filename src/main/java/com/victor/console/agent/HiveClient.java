@@ -98,17 +98,14 @@ public class HiveClient {
             } else {
                 try {
                     stmt = statementMap.get(queryInstance);
-                    System.out.println("开始取消查询");
-                    log.info("开始取消查询");
+                    log.info("开始取消查询,query_sql={}", queryInstance.querySql);
                     stmt.cancel();
                     isSuccess = true;
                     queryInstance.queryState = QueryState.CANCELLED;
-                    System.out.println("取消查询成功");
-                    log.info("取消查询成功");
+                    log.info("取消查询成功,query_sql={}", queryInstance.querySql);
                 } catch (Exception e) {
-                    System.out.println("cancel失败");
                     queryInstance.queryState = QueryState.FAILED;
-                    log.info("取消查询失败");
+                    log.info("取消查询失败,query_sql={}", queryInstance.querySql);
                 } finally {
                     if (stmt != null) {
                         stmt.close();
@@ -147,7 +144,7 @@ public class HiveClient {
             }
             i++;
             if (i > 1000) {
-                log.info("查询超时被关闭");
+                log.info("查询超时被关闭,query_sql={}", queryInstance.querySql);
                 isEnd = true;
                 stmt.cancel();
                 stmt.close();
@@ -156,6 +153,10 @@ public class HiveClient {
             Thread.sleep(5000);
         }
         queryInstance.log = sb.toString();
+
+        if (!Strings.isNullOrEmpty(queryInstance.queryId) && statementMap.containsKey(queryInstance)) {
+            statementMap.remove(queryInstance);
+        }
 
         return queryInstance;
     }

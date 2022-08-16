@@ -58,7 +58,6 @@ public class QueryManager {
                                                        while (PENDING_QUEUE.size() > 0) {
                                                            log.info("PENDING_QUEUE size:" + PENDING_QUEUE.size());
 
-                                                           HiveQueryBean hiveQueryBean;
                                                            QueryInstance queryInstance = null;
                                                            String queryId = null;
                                                            try {

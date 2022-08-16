@@ -42,8 +42,8 @@ public class HiveQueryController {
     public RestResponse add(@ApiParam(value = "query_sql") String query_sql, @ApiParam(value = "project") String project) {
         QueryInstance queryInstance = queryManager.generateQueryBean(project, query_sql, false);
 
-        HiveQueryBean hiveQueryBean;
-        if (hiveQueryService.get(queryInstance.getQueryId()) != null) {
+        HiveQueryBean hiveQueryBean = hiveQueryService.get(queryInstance.getQueryId());
+        if (hiveQueryBean != null && hiveQueryBean.getQueryState().equals(QueryState.SUCCESS.getQueryState())) {
             return RestResponse.fail("This query has been added,Please do not add it repeatedly ", ResponseCode.CODE_FAIL);
         } else {
             hiveQueryBean = HiveQueryBean.builder()
