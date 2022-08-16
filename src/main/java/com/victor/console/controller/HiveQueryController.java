@@ -10,6 +10,7 @@ import com.victor.console.service.HiveQueryService;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,7 +71,7 @@ public class HiveQueryController {
      * @param query_id
      * @return
      */
-    @PostMapping("state")
+    @GetMapping("state")
     public RestResponse state(@ApiParam(value = "query_id") String query_id) {
         HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
         if (hiveQueryBean != null) {
@@ -87,7 +88,7 @@ public class HiveQueryController {
      * @param query_id
      * @return
      */
-    @PostMapping("log")
+    @GetMapping("log")
     public RestResponse log(@ApiParam(value = "query_id") String query_id) {
         HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
         if (hiveQueryBean != null) {
@@ -109,11 +110,11 @@ public class HiveQueryController {
         HiveQueryBean hiveQueryBean = hiveQueryService.get(query_id);
 
         if (hiveQueryBean != null
-                && hiveQueryBean.getQueryState() != QueryState.SUCCESS.getQueryState()
-                && hiveQueryBean.getQueryState() != QueryState.FAILED.getQueryState()
-                && hiveQueryBean.getQueryState() != QueryState.CANCELLED.getQueryState()) {
-            QueryInstance queryInstance = queryManager.QUERY_MAP.get(hiveQueryBean.getQueryId());
+                && !hiveQueryBean.getQueryState().equals(QueryState.SUCCESS.getQueryState())
+                && !hiveQueryBean.getQueryState().equals(QueryState.FAILED.getQueryState())
+                && !hiveQueryBean.getQueryState().equals(QueryState.CANCELLED.getQueryState())) {
 
+            QueryInstance queryInstance = queryManager.QUERY_MAP.get(hiveQueryBean.getQueryId());
             try {
                 queryManager.cancelQuery(queryInstance);
                 return RestResponse.success(hiveQueryBean);
@@ -121,12 +122,12 @@ public class HiveQueryController {
                 return RestResponse.fail("this query cancel failed!", ResponseCode.CODE_FAIL);
             }
         } else {
-            return RestResponse.fail("sorry,this query can't be cancel!", ResponseCode.CODE_FAIL);
+            return RestResponse.fail("sorry,this query has been finished,it can't be canceled now!", ResponseCode.CODE_FAIL);
         }
     }
 
 
-    @PostMapping("select")
+    @GetMapping("select")
     public RestResponse select(@ApiParam(value = "query_id") String query_id) {
         return RestResponse.success(hiveQueryService.get(query_id));
     }
