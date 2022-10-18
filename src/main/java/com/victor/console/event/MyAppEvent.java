@@ -8,8 +8,19 @@ import org.springframework.context.ApplicationEvent;
  */
 public class MyAppEvent extends ApplicationEvent {
 
-    public MyAppEvent(Object source) {
+    String msg;
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public MyAppEvent(Object source, String msg) {
         super(source);
+        setMsg(msg);
         System.out.println("ApplicationEvent has been created");
     }
 }

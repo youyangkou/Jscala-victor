@@ -15,6 +15,7 @@ public class MyAppListener implements ApplicationListener<MyAppEvent> {
     @Override
     public void onApplicationEvent(MyAppEvent event) {
         int[] source = (int[]) event.getSource();
-        System.out.println("listener has get the event,source=:" + Arrays.toString(source));
+        String msg = event.getMsg();
+        System.out.println("listener has get the event,source=:" + Arrays.toString(source) + "\n------msg=" + msg);
     }
 }

@@ -1,6 +1,6 @@
 package com.victor.console;
 
-import com.victor.console.event.MyAppEvent;
+import com.victor.console.event.DemoPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -22,8 +22,7 @@ public class ApplicationConsole {
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(ApplicationConsole.class);
         ConfigurableApplicationContext applicationContext = application.run(ApplicationConsole.class, args);
-        int[] array = {1, 2, 3, 4};
-        applicationContext.publishEvent(new MyAppEvent(array));
-
+        DemoPublisher demoPublisher = applicationContext.getBean(DemoPublisher.class);
+        demoPublisher.publish("新事件发布！！！！");
     }
 }
